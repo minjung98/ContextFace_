@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/-bin/env python3
 """
 ContextFace Training Script
 
@@ -17,7 +17,7 @@ ContextFace Training Script
    python train.py --use_sitgen_data --use_expgen_data --lora_r 16 --auto_resume
 
 5. Resume from a specific checkpoint:
-   python train.py --resume "/data/minjung/ContextFace/checkpoints/face_SG45_EG45_lr5e-5_lora8_ep10_s1055/checkpoint_latest.pt"
+   python train.py --resume "/path/to/your/checkpoints/your_experiment_name/checkpoint_latest.pt"
 
 6. Set experiment name manually:
    python train.py --exp_name "my_experiment" --project_name "test_project" --use_sitgen_data --use_expgen_data
@@ -126,7 +126,7 @@ def parse_args(args):
     parser.add_argument("--weight_sitgen", default=0.35, type=float, help="Sampling weight for Situation Generation Dataset")
     parser.add_argument("--weight_expgen", default=0.55, type=float, help="Sampling weight for Expression Generation Dataset")
     parser.add_argument("--weight_cap", default=0.1, type=float, help="Sampling weight for VQA Dataset")
-    parser.add_argument("--dataset_dir", default="/data/minjung", type=str)
+    parser.add_argument("--dataset_dir", default="/path/to/your/datasets", type=str)
     parser.add_argument("--sitgen_sample_rates", default="1", type=str)
     parser.add_argument("--situation_generation_dataset", default="CAER_sitgen_dataset",
                         type=str, help="Choose from: SFEW_sitgen_dataset, CAER_sitgen_dataset")
@@ -169,7 +169,7 @@ def parse_args(args):
                         help="Choose from: CAER_ExpGenVal, SFEW_ExpGenVal")
 
     # Experiment settings
-    parser.add_argument("--log_base_dir", default="/data/minjung/ContextFace/checkpoints", type=str)
+    parser.add_argument("--log_base_dir", default="/path/to/your/output/checkpoints", type=str)
     parser.add_argument("--exp_name", default="auto", type=str, help="Experiment name ('auto' for automatic generation)")
     parser.add_argument("--project_name", default="auto", type=str, help="Project name ('auto' for automatic generation)")
     parser.add_argument("--disable_auto_naming", action="store_true", help="Disable automatic experiment naming")
@@ -213,7 +213,7 @@ def setup_tokenizer_and_special_tokens(args):
     tokenizer.pad_token = tokenizer.unk_token
 
     if not args.pretrained:
-        if args.use_mm_start_end:
+        if args.mm_use_im_start_end:
             tokenizer.add_tokens(
                 [DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True
             )
@@ -492,7 +492,7 @@ def load_contextface_model(model_dir):
     
     model_args = {{
         "out_dim": {args.out_dim}, "ce_loss_weight": {args.ce_loss_weight}, "face_loss_weight": {args.face_loss_weight},
-        "face_token_idx": {args.face_token_idx}, "mm_vision_tower": "{args.mm_vision_tower}", "use_mm_start_end": {args.use_mm_start_end},
+        "face_token_idx": {args.face_token_idx}, "mm_vision_tower": "{args.mm_vision_tower}", "use_mm_start_end": {args.mm_use_im_start_end},
         "mm_vision_select_layer": {args.mm_vision_select_layer}, "pretrain_mm_mlp_adapter": "", "tune_mm_mlp_adapter": False,
         "freeze_mm_mlp_adapter": True, "mm_use_im_start_end": {args.mm_use_im_start_end}
     }}
@@ -587,7 +587,7 @@ def setup_data_loaders(args, cap_train_dataset, expgen_train_dataset, sitgen_tra
     val_loader_args = {"batch_size": args.val_batch_size, "shuffle": False, "num_workers": args.workers, "pin_memory": False}
     
     # Use training-mode collate function for both train and val to calculate loss
-    collate_fn = partial(custom_collate_fn, tokenizer=tokenizer, use_mm_start_end=args.use_mm_start_end, local_rank=0, inference=False)
+    collate_fn = partial(custom_collate_fn, tokenizer=tokenizer, use_mm_start_end=args.mm_use_im_start_end, local_rank=0, inference=False)
 
     cap_train_loader = torch.utils.data.DataLoader(cap_train_dataset, collate_fn=collate_fn, **train_loader_args) if cap_train_dataset else None
     expgen_train_loader = torch.utils.data.DataLoader(expgen_train_dataset, collate_fn=collate_fn, **train_loader_args) if expgen_train_dataset else None
@@ -616,7 +616,7 @@ def initialize_deepspeed(model, tokenizer, args):
 
     model_engine, optimizer, _, scheduler = deepspeed.initialize(
         model=model, model_parameters=model.parameters(),
-        collate_fn=partial(custom_collate_fn, tokenizer=tokenizer, use_mm_start_end=args.use_mm_start_end, local_rank=0),
+        collate_fn=partial(custom_collate_fn, tokenizer=tokenizer, use_mm_start_end=args.mm_use_im_start_end, local_rank=0),
         config=ds_config
     )
     return model_engine, optimizer, scheduler
