@@ -123,9 +123,9 @@ def parse_args(args):
     parser.add_argument("--use_cap_data", action="store_true", help="Use Caption Dataset (VQA)")
     parser.add_argument("--use_sitgen_data", action="store_true", help="Use Situation Generation Dataset")
     parser.add_argument("--use_expgen_data", action="store_true", help="Use Expression Generation Dataset")
-    parser.add_argument("--weight_sitgen", default=0.35, type=float, help="Sampling weight for Situation Generation Dataset")
-    parser.add_argument("--weight_expgen", default=0.55, type=float, help="Sampling weight for Expression Generation Dataset")
-    parser.add_argument("--weight_cap", default=0.1, type=float, help="Sampling weight for VQA Dataset")
+    parser.add_argument("--weight_sitgen", default=0.3, type=float, help="Sampling weight for Situation Generation Dataset")
+    parser.add_argument("--weight_expgen", default=0.4, type=float, help="Sampling weight for Expression Generation Dataset")
+    parser.add_argument("--weight_cap", default=0.3, type=float, help="Sampling weight for VQA Dataset")
     parser.add_argument("--dataset_dir", default="/path/to/your/datasets", type=str)
     parser.add_argument("--sitgen_sample_rates", default="1", type=str)
     parser.add_argument("--situation_generation_dataset", default="CAER_sitgen_dataset",
