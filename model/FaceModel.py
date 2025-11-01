@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from typing import List
 import torch.nn.functional as F
 
 from model.llava.model.language_model.llava_llama import LlavaLlamaForCausalLM, LlavaLlamaModel
@@ -19,7 +18,7 @@ class FaceBaseModel:
         super(FaceBaseModel, self).__init__(config)
         self.config = config
        
-        self.config.out_dim = getattr(self.config, "out_dim", kwargs.get("out_dim", 100))
+        self.config.out_dim = getattr(self.config, "out_dim", kwargs.get("out_dim", 103))
         self.initialize_face_model()
 
     def initialize_face_model(self):
@@ -217,10 +216,10 @@ class FaceForCausalLM(LlavaLlamaForCausalLM):
                 'eos_token_id': [tokenizer.eos_token_id, self.face_token_idx],
                 'pad_token_id': tokenizer.pad_token_id,
                 'do_sample': False}
-                   
-            generation_outputs = self.generate(**generate_kwargs)
-            output_hidden_states = generation_outputs.hidden_states      
             
+            generation_outputs = self.generate(**generate_kwargs)
+            output_hidden_states = generation_outputs.hidden_states
+                
             generated_output_ids = generation_outputs.sequences
 
             face_token_mask = generated_output_ids[:, 1:] == self.face_token_idx
