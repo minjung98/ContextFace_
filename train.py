@@ -60,7 +60,7 @@ def parse_args(args):
     parser.add_argument("--weight", default="", type=str)
     parser.add_argument("--lr", default=5e-5, type=float)
     parser.add_argument("--epochs", default=10, type=int)
-    parser.add_argument("--steps_per_epoch", default=300, type=int)
+    parser.add_argument("--steps_per_epoch", default=1000, type=int)
     parser.add_argument("--batch_size", default=4, type=int, help="batch size per device per step")
     parser.add_argument("--grad_accumulation_steps", default=10, type=int)
     parser.add_argument("--val_batch_size", default=1, type=int)
