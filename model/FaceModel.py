@@ -18,7 +18,7 @@ class FaceBaseModel:
         super(FaceBaseModel, self).__init__(config)
         self.config = config
        
-        self.config.out_dim = getattr(self.config, "out_dim", kwargs.get("out_dim", 103))
+        self.config.out_dim = getattr(self.config, "out_dim", kwargs.get("out_dim", 100))
         self.initialize_face_model()
 
     def initialize_face_model(self):
