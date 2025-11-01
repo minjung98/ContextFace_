@@ -3,10 +3,11 @@ import cv2
 import json
 import random
 import torch
+import torch.nn.functional as F
 from transformers import CLIPImageProcessor
 from model.llava import conversation as conversation_lib
 from tools.utils import DEFAULT_IMAGE_TOKEN
-
+from PIL import Image
 
 class LLaVAInstructDataset(torch.utils.data.Dataset):
     def __init__(self, dataset_dir, tokenizer, clip_image_encoder, epoch_samples=10000,precision="fp32", validation=False, random_sampling=True):
@@ -75,12 +76,14 @@ class LLaVAInstructDataset(torch.utils.data.Dataset):
         ann_info = self.data_infos[idx] 
         image_path = os.path.join(self.image_folder, ann_info["image"])
         
-        image = cv2.imread(image_path)
-        if image is None:
-            print(f"Failed to load image: {image_path}")
-            raise ValueError(f"Could not load image at {image_path}")
+        # 이미지 로딩 에러 처리 추가
+        # image = cv2.imread(image_path)
+        # if image is None:
+        #     print(f"Failed to load image: {image_path}")
+        #     raise ValueError(f"Could not load image at {image_path}")
         
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = Image.open(image_path)
         clip_enc_images = self.clip_image_processor.preprocess(image, 
                                                                return_tensors="pt",
                                                                size=336)["pixel_values"][0]
