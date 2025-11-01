@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from typing import List
 import torch.nn.functional as F
 
 from model.llava.model.language_model.llava_llama import LlavaLlamaForCausalLM, LlavaLlamaModel
@@ -71,7 +72,7 @@ class FaceForCausalLM(LlavaLlamaForCausalLM):
     
     def _initialize_loss_weights(self, kwargs):
         self.ce_loss_weight = kwargs.pop("ce_loss_weight", 1.0)
-        self.face_loss_weight = kwargs.pop("face_loss_weight", 10.0)
+        self.face_loss_weight = kwargs.pop("face_loss_weight", 10.1)
 
     def forward(self, **kwargs):
         return super().forward(**kwargs) if "past_key_values" in kwargs else self.model_forward(**kwargs)
@@ -88,7 +89,6 @@ class FaceForCausalLM(LlavaLlamaForCausalLM):
             )
 
         # Create segmentation token mask
-
         face_token_mask = self._create_face_token_mask(input_ids)
         
         # Process hidden states
@@ -216,10 +216,11 @@ class FaceForCausalLM(LlavaLlamaForCausalLM):
                 'eos_token_id': [tokenizer.eos_token_id, self.face_token_idx],
                 'pad_token_id': tokenizer.pad_token_id,
                 'do_sample': False}
+           
             
             generation_outputs = self.generate(**generate_kwargs)
             output_hidden_states = generation_outputs.hidden_states
-                
+      
             generated_output_ids = generation_outputs.sequences
 
             face_token_mask = generated_output_ids[:, 1:] == self.face_token_idx
