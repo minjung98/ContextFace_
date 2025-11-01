@@ -1,9 +1,28 @@
+from enum import Enum
+
+import numpy as np
+import torch
+import torch.distributed as dist
+
 IGNORE_INDEX = -100
 IMAGE_TOKEN_INDEX = -200
+
+DEFAULT_EOS_TOKEN = '</s>'
+DEFAULT_BOS_TOKEN = '<s>'
+DEFAULT_UNK_TOKEN = '<unk>'
+
 DEFAULT_IMAGE_TOKEN = "<image>"
 DEFAULT_IMAGE_PATCH_TOKEN = "<im_patch>"
 DEFAULT_IM_START_TOKEN = "<im_start>"
 DEFAULT_IM_END_TOKEN = "<im_end>"
+
+
+class Summary(Enum):
+    NONE = 0
+    AVERAGE = 1
+    SUM = 2
+    COUNT = 3
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -68,6 +87,22 @@ class AverageMeter(object):
 
         return fmtstr.format(**self.__dict__)
 
+
+def intersectionAndUnionGPU(output, target, K, ignore_index=255):
+    # 'K' classes, output and target sizes are N or N * L or N * H * W, each value in range 0 to K - 1.
+    assert output.dim() in [1, 2, 3]
+    assert output.shape == target.shape
+    output = output.view(-1)
+    target = target.view(-1)
+    output[target == ignore_index] = ignore_index
+    intersection = output[output == target]
+    area_intersection = torch.histc(intersection, bins=K, min=0, max=K - 1)
+    area_output = torch.histc(output, bins=K, min=0, max=K - 1)
+    area_target = torch.histc(target, bins=K, min=0, max=K - 1)
+    area_union = area_output + area_target - area_intersection
+    return area_intersection, area_union, area_target
+
+
 class ProgressMeter(object):
     def __init__(self, num_batches, meters, prefix=""):
         self.batch_fmtstr = self._get_batch_fmtstr(num_batches)
@@ -89,14 +124,11 @@ class ProgressMeter(object):
         fmt = "{:" + str(num_digits) + "d}"
         return "[" + fmt + "/" + fmt.format(num_batches) + "]"
 
+
 def dict_to_cuda(input_dict):
     for k, v in input_dict.items():
         if isinstance(input_dict[k], torch.Tensor):
             input_dict[k] = v.cuda(non_blocking=True)
-        elif (
-            isinstance(input_dict[k], list)
-            and len(input_dict[k]) > 0
-            and isinstance(input_dict[k][0], torch.Tensor)
-        ):
-            input_dict[k] = [ele.cuda(non_blocking=True) for ele in v]
+        elif isinstance(v, list) and len(v) > 0:
+            input_dict[k] = [ele.cuda(non_blocking=True) if isinstance(ele, torch.Tensor) else ele for ele in v]
     return input_dict
